@@ -36,7 +36,20 @@ namespace RunnerRemoteExecutionService
             var messageDeferral = args.GetDeferral();
 
             ValueSet returnData = new ValueSet();
-            HandleTheRequest(args.Request.Message, returnData);
+
+            string requestType = (string)args.Request.Message["RequestType"];
+            if (requestType == "ProvideProcessInfo")
+            {
+                HandleProvideProcessInfoRequest(args.Request.Message, returnData);
+            }
+            else if (requestType == "RemoteInvoke")
+            {
+                HandleRemoteInvokeRequest(args.Request.Message, returnData);
+            }
+            else
+            {
+                throw new Exception("Unknown RequestType");
+            }
 
             // Return the data to the caller.
             // Complete the deferral so that the platform knows that we're done responding to the app service call.
@@ -55,7 +68,20 @@ namespace RunnerRemoteExecutionService
             }
         }
 
-        private void HandleTheRequest(ValueSet message, ValueSet returnData)
+
+        [DllImport("kernel32.dll")]
+        internal static extern int GetCurrentProcessId();
+
+        [DllImport("kernel32.dll")]
+        internal static extern int GetCurrentProcess();
+
+        private void HandleProvideProcessInfoRequest(ValueSet message, ValueSet returnData)
+        {
+            returnData["phandle"] = GetCurrentProcess();
+            returnData["pid"] = GetCurrentProcessId();
+        }
+
+        private void HandleRemoteInvokeRequest(ValueSet message, ValueSet returnData)
         {
             string assemblyName;
             string typeName;
